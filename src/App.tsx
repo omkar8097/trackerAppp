@@ -1,6 +1,7 @@
 import { AuthProvider } from './context/AuthContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 import { Navbar } from './components/Navbar';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { SummaryCards } from './components/dashboard/SummaryCards';
 import { ExpenseCharts } from './components/dashboard/ExpenseCharts';
@@ -14,37 +15,39 @@ export function App() {
         <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
           <PWAInstallPrompt />
 
-          {/* Header Bar */}
+          {/* Top Header Navbar */}
           <Navbar />
 
-
           {/* Main Dashboard Container */}
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 md:py-8 space-y-6 md:space-y-8 pb-28 md:pb-12">
             
             {/* Top Stat Summary Cards */}
-            <section>
+            <section id="summary-section">
               <SummaryCards />
             </section>
 
             {/* Financial Visual Charts */}
-            <section>
+            <section id="charts-section">
               <ExpenseCharts />
             </section>
 
             {/* Category Budget Limits */}
-            <section>
+            <section id="budgets-section">
               <BudgetProgress />
             </section>
 
             {/* Detailed Transaction History Table */}
-            <section className="pt-2">
+            <section id="transactions-section" className="pt-2">
               <TransactionList />
             </section>
 
           </main>
 
+          {/* Floating Mobile Bottom Navigation Bar */}
+          <MobileBottomNav />
+
           {/* Footer */}
-          <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+          <footer className="border-t border-slate-900 bg-slate-950 py-6 mb-16 md:mb-0 text-center text-xs text-slate-500">
             <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
               <p>ExpenseFlow • Firebase Auth & Realtime Cloud Firestore Tracker</p>
               <p className="text-slate-600">Built with React, Vite, TypeScript & Tailwind CSS</p>
