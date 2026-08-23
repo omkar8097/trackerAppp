@@ -6,9 +6,6 @@ export function getNotificationPermissionState(): 'granted' | 'denied' | 'defaul
 }
 
 export function isNotificationEnabledByUser(): boolean {
-  if (!('Notification' in window)) return false;
-  if (Notification.permission !== 'granted') return false;
-
   try {
     const saved = localStorage.getItem(NOTIF_ENABLED_STORAGE_KEY);
     if (saved !== null) {
@@ -17,7 +14,7 @@ export function isNotificationEnabledByUser(): boolean {
   } catch (e) {
     console.error('Failed reading notification preference', e);
   }
-  return Notification.permission === 'granted';
+  return false;
 }
 
 export function setNotificationEnabledByUser(enabled: boolean) {
@@ -90,6 +87,9 @@ export async function toggleNotifications(): Promise<{ isEnabled: boolean; state
 export async function sendLocalNotification(title: string, options?: NotificationOptions) {
   if (!isNotificationEnabledByUser()) {
     console.log('[PWA Notifications] Notifications are turned OFF by user setting.');
+    return;
+  }
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
     return;
   }
 

@@ -63,6 +63,10 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateSecuritySettings = (updated: Partial<SecuritySettings>) => {
     const next = { ...securitySettings, ...updated };
     if (updated.isLockEnabled === false) {
+      next.isLockEnabled = false;
+      next.pin = '';
+      next.isBiometricEnabled = false;
+      next.autoLockMinutes = 0;
       setIsLocked(false);
     }
     saveSettings(next);
