@@ -9,6 +9,7 @@ interface SecurityContextType {
   unlockWithBiometrics: () => Promise<boolean>;
   updateSecuritySettings: (settings: Partial<SecuritySettings>) => void;
   lockApp: () => void;
+  resetSecurityLock: () => void;
 }
 
 const LOCAL_STORAGE_SECURITY_KEY = 'expense_tracker_security_settings';
@@ -123,6 +124,16 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const resetSecurityLock = () => {
+    setSecuritySettings(DEFAULT_SECURITY_SETTINGS);
+    setIsLocked(false);
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_SECURITY_KEY);
+    } catch (e) {
+      console.error('Failed clearing security settings', e);
+    }
+  };
+
   // Auto-lock when tab is hidden or user leaves app
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -153,6 +164,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         unlockWithBiometrics,
         updateSecuritySettings,
         lockApp,
+        resetSecurityLock,
       }}
     >
       {children}

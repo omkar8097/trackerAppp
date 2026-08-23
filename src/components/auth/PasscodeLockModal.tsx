@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Fingerprint, Delete, ShieldAlert } from 'lucide-react';
+import { Lock, Fingerprint, Delete, ShieldAlert, RotateCcw } from 'lucide-react';
 import { useSecurity } from '../../context/SecurityContext';
 
 export const PasscodeLockModal: React.FC = () => {
-  const { isLocked, securitySettings, verifyPin, unlockWithBiometrics } = useSecurity();
+  const { isLocked, securitySettings, verifyPin, unlockWithBiometrics, resetSecurityLock } = useSecurity();
   const [pinInput, setPinInput] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
@@ -64,6 +64,12 @@ export const PasscodeLockModal: React.FC = () => {
     const success = await unlockWithBiometrics();
     if (!success) {
       setErrorMsg('Biometric authentication failed.');
+    }
+  };
+
+  const handleResetLock = () => {
+    if (window.confirm('Reset Security PIN Lock? This will remove the 4-digit lock and open ExpenseFlow immediately.')) {
+      resetSecurityLock();
     }
   };
 
@@ -155,6 +161,17 @@ export const PasscodeLockModal: React.FC = () => {
             title="Delete digit"
           >
             <Delete className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Forgot PIN / Emergency Reset Lock */}
+        <div className="pt-4 border-t border-slate-900 w-full max-w-[280px]">
+          <button
+            type="button"
+            onClick={handleResetLock}
+            className="text-xs font-semibold text-rose-400/80 hover:text-rose-300 transition-colors py-1 flex items-center justify-center gap-1.5 mx-auto"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Forgot PIN? Reset Lock
           </button>
         </div>
 
