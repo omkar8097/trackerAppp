@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download, LayoutDashboard, PieChart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download, LayoutDashboard, PieChart, Bell, BellRing } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useExpense } from '../context/ExpenseContext';
 import { usePWA } from '../hooks/usePWA';
 import { AuthModal } from './auth/AuthModal';
 import { formatCurrency } from '../utils/formatters';
+import { enableNotificationsWithTest, getNotificationPermissionState } from '../utils/notifications';
 
 interface Props {
   activeTab: 'dashboard' | 'analytics';
@@ -17,6 +18,19 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const { isInstallable, isInstalled, promptInstall } = usePWA();
   
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [notifState, setNotifState] = useState<string>('default');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNotifState(getNotificationPermissionState());
+  }, []);
+
+  const handleToggleNotifications = async () => {
+    const res = await enableNotificationsWithTest();
+    setNotifState(res.state);
+    setToastMessage(res.message);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   return (
     <>
@@ -94,7 +108,28 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            
+            {/* Mobile / PWA Notification Bell Toggle */}
+            <button
+              onClick={handleToggleNotifications}
+              className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                notifState === 'granted'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+              title={notifState === 'granted' ? 'Notifications Active' : 'Tap to Enable Mobile Notifications'}
+            >
+              {notifState === 'granted' ? (
+                <BellRing className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <Bell className="w-4 h-4 text-slate-400" />
+              )}
+              <span className="hidden sm:inline">
+                {notifState === 'granted' ? 'Alerts Active' : 'Enable Alerts'}
+              </span>
+            </button>
+
             {isInstallable && !isInstalled && (
               <button
                 onClick={promptInstall}
@@ -143,6 +178,14 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
           </div>
         </div>
       </header>
+
+      {/* Notification Toast Alert Banner */}
+      {toastMessage && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-slate-900/95 border border-emerald-500/40 text-emerald-300 text-xs shadow-2xl backdrop-blur-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-200">
+          <BellRing className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
       {/* Auth Modal */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
