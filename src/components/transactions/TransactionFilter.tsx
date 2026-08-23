@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, Filter, Download, Plus, ArrowUpDown, Calendar, Hash } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Filter, Download, Plus, ArrowUpDown, Calendar, Hash, ChevronDown } from 'lucide-react';
 import { useExpense } from '../../context/ExpenseContext';
 import { exportToCSV } from '../../utils/formatters';
 
@@ -8,7 +8,8 @@ interface Props {
 }
 
 export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
-  const { categories, availableTags, filterOptions, setFilterOptions, filteredTransactions } = useExpense();
+  const { transactions, categories, availableTags, filterOptions, setFilterOptions, filteredTransactions } = useExpense();
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterOptions((prev) => ({ ...prev, searchTerm: e.target.value }));
@@ -38,8 +39,14 @@ export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
     setFilterOptions((prev) => ({ ...prev, endDate: e.target.value }));
   };
 
-  const handleExport = () => {
-    exportToCSV(filteredTransactions);
+  const handleExportFiltered = () => {
+    exportToCSV(filteredTransactions, `expenseflow_filtered_${new Date().toISOString().split('T')[0]}.csv`);
+    setShowExportMenu(false);
+  };
+
+  const handleExportAll = () => {
+    exportToCSV(transactions, `expenseflow_all_transactions_${new Date().toISOString().split('T')[0]}.csv`);
+    setShowExportMenu(false);
   };
 
   return (
@@ -76,15 +83,43 @@ export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
         </div>
 
         {/* Buttons: Export & Add */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleExport}
-            disabled={!filteredTransactions.length}
-            className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center gap-1.5"
-            title="Export filtered transactions to CSV"
-          >
-            <Download className="w-3.5 h-3.5" /> Export CSV
-          </button>
+        <div className="flex items-center gap-2 relative">
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={!transactions.length}
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              title="Export detailed transaction records to CSV"
+            >
+              <Download className="w-3.5 h-3.5" /> Export CSV <ChevronDown className="w-3 h-3 text-slate-500" />
+            </button>
+
+            {/* Export Menu Dropdown */}
+            {showExportMenu && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <button
+                  onClick={handleExportFiltered}
+                  disabled={!filteredTransactions.length}
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-slate-200 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-xl transition-colors disabled:opacity-40 flex items-center justify-between"
+                >
+                  <span>Export Filtered List</span>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    {filteredTransactions.length}
+                  </span>
+                </button>
+                <button
+                  onClick={handleExportAll}
+                  disabled={!transactions.length}
+                  className="w-full text-left px-3 py-2 text-xs font-medium text-slate-200 hover:bg-emerald-500/20 hover:text-emerald-300 rounded-xl transition-colors disabled:opacity-40 flex items-center justify-between mt-1"
+                >
+                  <span>Export All History</span>
+                  <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                    {transactions.length}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={onAddClick}

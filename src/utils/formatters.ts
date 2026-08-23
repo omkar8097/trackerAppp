@@ -31,22 +31,45 @@ export const getCurrentMonthISO = (): { start: string; end: string } => {
   };
 };
 
-export const exportToCSV = (transactions: Transaction[], filename: string = 'financial_transactions.csv') => {
-  if (!transactions.length) return;
+export const exportToCSV = (transactions: Transaction[], filename: string = 'expenseflow_transactions_export.csv') => {
+  if (!transactions || !transactions.length) return;
 
-  const headers = ['Date', 'Title', 'Type', 'Category', 'Amount', 'Payment Method', 'Notes'];
-  const rows = transactions.map((t) => [
-    t.date,
-    `"${t.title.replace(/"/g, '""')}"`,
-    t.type,
-    `"${t.category}"`,
-    t.amount,
-    t.paymentMethod || 'other',
-    `"${(t.notes || '').replace(/"/g, '""')}"`,
-  ]);
+  // Comprehensive CSV Headers
+  const headers = [
+    'Transaction ID',
+    'Date',
+    'Title / Description',
+    'Type',
+    'Category',
+    'Tags',
+    'Amount (₹)',
+    'Payment Method',
+    'Notes',
+    'Created Timestamp'
+  ];
 
+  const rows = transactions.map((t) => {
+    const formattedTags = (t.tags || []).map((tag) => `#${tag}`).join('; ');
+    const paymentMethodLabel = (t.paymentMethod || 'card').replace('_', ' ');
+    const createdAtIso = t.createdAt ? new Date(t.createdAt).toISOString() : '';
+
+    return [
+      `"${t.id}"`,
+      `"${t.date}"`,
+      `"${t.title.replace(/"/g, '""')}"`,
+      `"${t.type.toUpperCase()}"`,
+      `"${t.category.replace(/"/g, '""')}"`,
+      `"${formattedTags.replace(/"/g, '""')}"`,
+      t.amount,
+      `"${paymentMethodLabel}"`,
+      `"${(t.notes || '').replace(/"/g, '""')}"`,
+      `"${createdAtIso}"`,
+    ];
+  });
+
+  // Include UTF-8 BOM (\uFEFF) for Excel, Numbers, and Google Sheets compatibility
   const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
@@ -54,4 +77,5 @@ export const exportToCSV = (transactions: Transaction[], filename: string = 'fin
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
