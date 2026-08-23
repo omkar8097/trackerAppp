@@ -59,3 +59,11 @@ export interface FilterOptions {
   endDate: string;
   sortBy: 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc';
 }
+
+export interface SecuritySettings {
+  isLockEnabled: boolean;
+  pin: string; // 4-digit PIN
+  isBiometricEnabled: boolean;
+  autoLockMinutes: number; // 0 = immediate, 1 = 1 min, 5 = 5 min
+  lastUnlockedAt?: number;
+}

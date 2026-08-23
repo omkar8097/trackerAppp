@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download, LayoutDashboard, PieChart, Bell, BellRing } from 'lucide-react';
+import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download, LayoutDashboard, PieChart, Bell, BellRing, ShieldCheck, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useExpense } from '../context/ExpenseContext';
 import { usePWA } from '../hooks/usePWA';
+import { useSecurity } from '../context/SecurityContext';
 import { AuthModal } from './auth/AuthModal';
+import { SecuritySettingsModal } from './auth/SecuritySettingsModal';
 import { formatCurrency } from '../utils/formatters';
 import { enableNotificationsWithTest, getNotificationPermissionState } from '../utils/notifications';
 
@@ -16,8 +18,10 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const { currentUser, isDemoMode, logoutUser } = useAuth();
   const { summary, resetToDemoData } = useExpense();
   const { isInstallable, isInstalled, promptInstall } = usePWA();
+  const { securitySettings, lockApp } = useSecurity();
   
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
   const [notifState, setNotifState] = useState<string>('default');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -110,6 +114,36 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             
+            {/* Passcode Security & Lock Button */}
+            <button
+              onClick={() => {
+                if (securitySettings.isLockEnabled && securitySettings.pin) {
+                  lockApp();
+                } else {
+                  setIsSecurityOpen(true);
+                }
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setIsSecurityOpen(true);
+              }}
+              className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                securitySettings.isLockEnabled
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+              title={securitySettings.isLockEnabled ? 'Tap to Lock App (Right click for Settings)' : 'Configure Passcode Lock'}
+            >
+              {securitySettings.isLockEnabled ? (
+                <Lock className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <ShieldCheck className="w-4 h-4 text-slate-400" />
+              )}
+              <span className="hidden sm:inline">
+                {securitySettings.isLockEnabled ? 'Lock' : 'App Lock'}
+              </span>
+            </button>
+
             {/* Mobile / PWA Notification Bell Toggle */}
             <button
               onClick={handleToggleNotifications}
@@ -187,8 +221,9 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
         </div>
       )}
 
-      {/* Auth Modal */}
+      {/* Modals */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <SecuritySettingsModal isOpen={isSecurityOpen} onClose={() => setIsSecurityOpen(false)} />
     </>
   );
 };

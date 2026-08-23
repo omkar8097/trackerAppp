@@ -108,7 +108,12 @@ expense-tracker-firebase/
 - Triggers a recurring daily 9:00 PM IST notification: `"🌙 Daily Expense Summary (9:00 PM IST): Today: Spent ₹X | Income +₹Y (Z entries). Tap to review!"`
 - Paired with standing background cron schedule (`0 21 * * *`).
 
-### 8. Mobile-First UI & PWA Installability
+### 8. Passcode 4-Digit PIN & Biometric Lock (Fingerprint / Face ID)
+- `SecurityContext.tsx` manages app lock state, PIN verification, WebAuthn biometric unlock, and auto-lock on page visibility change.
+- `PasscodeLockModal.tsx` provides a full-screen dark security lock overlay with an interactive 4-digit numeric PIN pad, error shake animations, and biometric fingerprint button.
+- `SecuritySettingsModal.tsx` allows users to toggle App Lock ON/OFF, set/change 4-digit PIN, enable biometrics, and configure auto-lock timeouts.
+
+### 9. Mobile-First UI & PWA Installability
 - Mobile bottom navigation bar (`MobileBottomNav.tsx`) with center floating FAB `+` button.
 - Bottom sheet modals (`rounded-t-3xl`) for touch devices.
 - Service Worker (`sw.js`) registered using relative `BASE_URL` scope (`./sw.js`).
