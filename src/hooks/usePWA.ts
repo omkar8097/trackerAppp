@@ -11,13 +11,21 @@ export function usePWA() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [swRegistered, setSwRegistered] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // 1. Service Worker Registration
+    // 1. Detect iOS device
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(isIosDevice);
+
+    // 2. Service Worker Registration with relative BASE_URL
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+      const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+      
+      const registerSW = () => {
         navigator.serviceWorker
-          .register('/sw.js')
+          .register(swUrl)
           .then((registration) => {
             console.log('[PWA] Service Worker registered with scope:', registration.scope);
             setSwRegistered(true);
@@ -25,10 +33,16 @@ export function usePWA() {
           .catch((error) => {
             console.error('[PWA] Service Worker registration failed:', error);
           });
-      });
+      };
+
+      if (document.readyState === 'complete') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+      }
     }
 
-    // 2. Check if app is already running in standalone display mode
+    // 3. Check if app is already running in standalone display mode
     const checkInstalled = () => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
         (navigator as unknown as { standalone?: boolean }).standalone === true;
@@ -40,7 +54,7 @@ export function usePWA() {
     const handleDisplayChange = (e: MediaQueryListEvent) => setIsInstalled(e.matches);
     mediaQuery.addEventListener('change', handleDisplayChange);
 
-    // 3. Catch beforeinstallprompt Event
+    // 4. Catch beforeinstallprompt Event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -54,7 +68,7 @@ export function usePWA() {
       console.log('[PWA] App successfully installed');
     };
 
-    // 4. Online/Offline Listeners
+    // 5. Online/Offline Listeners
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -90,6 +104,7 @@ export function usePWA() {
     isInstalled,
     isOnline,
     swRegistered,
+    isIOS,
     promptInstall,
   };
 }
