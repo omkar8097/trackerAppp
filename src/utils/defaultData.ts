@@ -6,7 +6,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'inc_freelance', name: 'Freelance & Projects', type: 'income', icon: 'Laptop', color: '#3B82F6' },
   { id: 'inc_investments', name: 'Investments & Dividends', type: 'income', icon: 'TrendingUp', color: '#8B5CF6' },
   { id: 'inc_side_hustle', name: 'Side Business', type: 'income', icon: 'Store', color: '#EC4899' },
-  { id: 'inc_other', name: 'Other Income', type: 'income', icon: 'DollarSign', color: '#6B7280' },
+  { id: 'inc_other', name: 'Other Income', type: 'income', icon: 'IndianRupee', color: '#6B7280' },
 
   // Expense Categories
   { id: 'exp_housing', name: 'Housing & Rent', type: 'expense', icon: 'Home', color: '#EF4444' },
@@ -21,11 +21,11 @@ export const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export const DEFAULT_BUDGETS: Budget[] = [
-  { categoryId: 'exp_food', categoryName: 'Food & Groceries', monthlyLimit: 600 },
-  { categoryId: 'exp_housing', categoryName: 'Housing & Rent', monthlyLimit: 1500 },
-  { categoryId: 'exp_transport', categoryName: 'Transportation & Gas', monthlyLimit: 300 },
-  { categoryId: 'exp_entertainment', categoryName: 'Entertainment & Leisure', monthlyLimit: 250 },
-  { categoryId: 'exp_shopping', categoryName: 'Shopping & Apparel', monthlyLimit: 350 },
+  { categoryId: 'exp_food', categoryName: 'Food & Groceries', monthlyLimit: 15000 },
+  { categoryId: 'exp_housing', categoryName: 'Housing & Rent', monthlyLimit: 25000 },
+  { categoryId: 'exp_transport', categoryName: 'Transportation & Gas', monthlyLimit: 6000 },
+  { categoryId: 'exp_entertainment', categoryName: 'Entertainment & Leisure', monthlyLimit: 5000 },
+  { categoryId: 'exp_shopping', categoryName: 'Shopping & Apparel', monthlyLimit: 8000 },
 ];
 
 const getPastDate = (daysAgo: number): string => {
@@ -38,7 +38,7 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   {
     id: 'demo_1',
     title: 'Monthly Tech Salary',
-    amount: 4500,
+    amount: 85000,
     type: 'income',
     category: 'Salary & Wages',
     date: getPastDate(2),
@@ -49,7 +49,7 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   {
     id: 'demo_2',
     title: 'Apartment Rent',
-    amount: 1400,
+    amount: 24000,
     type: 'expense',
     category: 'Housing & Rent',
     date: getPastDate(3),
@@ -59,8 +59,8 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'demo_3',
-    title: 'Whole Foods Grocery Shopping',
-    amount: 185.50,
+    title: 'Grocery Shopping',
+    amount: 4250,
     type: 'expense',
     category: 'Food & Groceries',
     date: getPastDate(4),
@@ -71,7 +71,7 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   {
     id: 'demo_4',
     title: 'UI Design Freelance Project',
-    amount: 950,
+    amount: 18500,
     type: 'income',
     category: 'Freelance & Projects',
     date: getPastDate(5),
@@ -81,19 +81,19 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'demo_5',
-    title: 'Gasoline & Car Fillup',
-    amount: 52.80,
+    title: 'Petrol Fillup',
+    amount: 2400,
     type: 'expense',
     category: 'Transportation & Gas',
     date: getPastDate(6),
-    notes: 'Shell station unleaded gas',
+    notes: 'Fuel station fillup',
     paymentMethod: 'card',
     createdAt: Date.now() - 6 * 86400000,
   },
   {
     id: 'demo_6',
     title: 'Netflix & Spotify Subscriptions',
-    amount: 28.98,
+    amount: 999,
     type: 'expense',
     category: 'Subscriptions & Software',
     date: getPastDate(8),
@@ -103,8 +103,8 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'demo_7',
-    title: 'Electric & Internet Utilities',
-    amount: 145.20,
+    title: 'Electricity & Wi-Fi Bills',
+    amount: 3850,
     type: 'expense',
     category: 'Utilities & Bills',
     date: getPastDate(10),
@@ -114,19 +114,19 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   },
   {
     id: 'demo_8',
-    title: 'Dinner at Italian Restaurant',
-    amount: 78.40,
+    title: 'Dinner with Friends',
+    amount: 2450,
     type: 'expense',
     category: 'Food & Groceries',
     date: getPastDate(12),
-    notes: 'Weekend dining with friends',
+    notes: 'Weekend dining out',
     paymentMethod: 'card',
     createdAt: Date.now() - 12 * 86400000,
   },
   {
     id: 'demo_9',
     title: 'Stock Portfolio Dividend',
-    amount: 120.00,
+    amount: 3500,
     type: 'income',
     category: 'Investments & Dividends',
     date: getPastDate(14),
@@ -137,11 +137,11 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
   {
     id: 'demo_10',
     title: 'New Running Shoes',
-    amount: 119.99,
+    amount: 4999,
     type: 'expense',
     category: 'Shopping & Apparel',
     date: getPastDate(15),
-    notes: 'Nike athletic gear',
+    notes: 'Athletic footwear',
     paymentMethod: 'card',
     createdAt: Date.now() - 15 * 86400000,
   },

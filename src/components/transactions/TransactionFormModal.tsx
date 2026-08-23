@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, DollarSign, Calendar, Tag, CreditCard, AlignLeft } from 'lucide-react';
+import { X, IndianRupee, Calendar, Tag, CreditCard, AlignLeft } from 'lucide-react';
 import { useExpense } from '../../context/ExpenseContext';
 import type { Transaction, TransactionType } from '../../types';
 
@@ -154,10 +154,10 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
             {/* Amount */}
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Amount ($) <span className="text-rose-400">*</span>
+                Amount (₹) <span className="text-rose-400">*</span>
               </label>
               <div className="relative">
-                <DollarSign className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                <IndianRupee className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
                 <input
                   type="number"
                   step="0.01"
