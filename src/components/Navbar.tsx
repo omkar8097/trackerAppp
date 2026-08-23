@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
-import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download } from 'lucide-react';
+import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download, LayoutDashboard, PieChart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useExpense } from '../context/ExpenseContext';
 import { usePWA } from '../hooks/usePWA';
 import { AuthModal } from './auth/AuthModal';
 import { formatCurrency } from '../utils/formatters';
 
-export const Navbar: React.FC = () => {
+interface Props {
+  activeTab: 'dashboard' | 'analytics';
+  setActiveTab: (tab: 'dashboard' | 'analytics') => void;
+}
+
+export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const { currentUser, isDemoMode, logoutUser } = useAuth();
   const { summary, resetToDemoData } = useExpense();
   const { isInstallable, isInstalled, promptInstall } = usePWA();
@@ -18,28 +23,54 @@ export const Navbar: React.FC = () => {
       <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
-          {/* Logo & App Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-0.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
-              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-emerald-400" />
+          {/* Logo & Navigation Tabs */}
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-0.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+                <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-emerald-400" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-bold text-lg text-white tracking-tight">ExpenseFlow</h1>
+                  {isDemoMode ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Offline Mode
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
+                      <Database className="w-3 h-3" /> Firebase Live
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 hidden sm:block">Firebase Auth & Realtime Cloud Firestore Expense Tracker</p>
               </div>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-bold text-lg text-white tracking-tight">ExpenseFlow</h1>
-                {isDemoMode ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Offline Mode
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
-                    <Database className="w-3 h-3" /> Firebase Live
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-400 hidden sm:block">Firebase Auth & Realtime Cloud Firestore Expense Tracker</p>
-            </div>
+
+            {/* Desktop Navigation Links */}
+            <nav className="hidden md:flex items-center gap-1 p-1 bg-slate-900/90 rounded-xl border border-slate-800 text-xs">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                  activeTab === 'dashboard'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                  activeTab === 'analytics'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <PieChart className="w-3.5 h-3.5" /> Analytics
+              </button>
+            </nav>
           </div>
 
           {/* Center Summary Quick Badge */}

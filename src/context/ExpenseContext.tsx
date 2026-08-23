@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { firebaseDb } from '../firebase/firebase';
 import { useAuth } from './AuthContext';
-import type { Transaction, Category, Budget, FinancialSummary, FilterOptions } from '../types';
+import type { Transaction, Category, Budget, FinancialSummary, FilterOptions, TransactionType } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_BUDGETS, DEMO_TRANSACTIONS } from '../utils/defaultData';
 import { getCurrentMonthISO } from '../utils/formatters';
 
@@ -20,6 +20,7 @@ interface ExpenseContextType {
   transactions: Transaction[];
   categories: Category[];
   budgets: Budget[];
+  availableTags: string[];
   loading: boolean;
   filterOptions: FilterOptions;
   filteredTransactions: Transaction[];
@@ -28,19 +29,21 @@ interface ExpenseContextType {
   addTransaction: (t: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
   updateTransaction: (id: string, t: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  addCategory: (name: string, type: TransactionType, color?: string, icon?: string) => Promise<Category>;
   updateBudget: (categoryId: string, monthlyLimit: number) => Promise<void>;
   resetToDemoData: () => void;
 }
 
 const LOCAL_STORAGE_TX_KEY = 'expense_tracker_demo_transactions';
 const LOCAL_STORAGE_BUDGET_KEY = 'expense_tracker_demo_budgets';
+const LOCAL_STORAGE_CAT_KEY = 'expense_tracker_custom_categories';
 
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
 
 export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, isDemoMode } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const [customCategories, setCustomCategories] = useState<Category[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>(DEFAULT_BUDGETS);
   const [_loading, setLoading] = useState<boolean>(true);
 
@@ -48,17 +51,29 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     searchTerm: '',
     type: 'all',
     category: 'all',
+    tag: 'all',
     startDate: '',
     endDate: '',
     sortBy: 'date_desc',
   });
+
+  // Combine default categories with custom categories
+  const categories = useMemo(() => {
+    const combined = [...DEFAULT_CATEGORIES];
+    customCategories.forEach((customCat) => {
+      if (!combined.some((c) => c.name.toLowerCase() === customCat.name.toLowerCase())) {
+        combined.push(customCat);
+      }
+    });
+    return combined;
+  }, [customCategories]);
 
   // Load Firestore data or Demo Local Storage
   useEffect(() => {
     setLoading(true);
 
     if (currentUser && !isDemoMode && firebaseDb) {
-      // Realtime Firestore Subscription
+      // Realtime Firestore Transactions Subscription
       const q = query(
         collection(firebaseDb, 'transactions'),
         where('userId', '==', currentUser.uid)
@@ -75,6 +90,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
             amount: Number(data.amount),
             type: data.type,
             category: data.category,
+            tags: Array.isArray(data.tags) ? data.tags : [],
             date: data.date,
             notes: data.notes,
             paymentMethod: data.paymentMethod,
@@ -86,6 +102,28 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }, (err) => {
         console.error('Firestore subscription error:', err);
         setLoading(false);
+      });
+
+      // Custom Categories Firestore Subscription
+      const qCat = query(
+        collection(firebaseDb, 'categories'),
+        where('userId', '==', currentUser.uid)
+      );
+      const unsubCat = onSnapshot(qCat, (snapshot) => {
+        const cList: Category[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          cList.push({
+            id: docSnap.id,
+            userId: data.userId,
+            name: data.name,
+            type: data.type,
+            icon: data.icon || 'Tag',
+            color: data.color || '#10B981',
+            isCustom: true,
+          });
+        });
+        setCustomCategories(cList);
       });
 
       // Budgets Firestore Subscription
@@ -108,13 +146,15 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       return () => {
         unsubTx();
+        unsubCat();
         unsubBudget();
       };
     } else {
-      // Demo / Local Storage Mode
+      // Offline / Local Storage Mode
       try {
         const savedTx = localStorage.getItem(LOCAL_STORAGE_TX_KEY);
         const savedB = localStorage.getItem(LOCAL_STORAGE_BUDGET_KEY);
+        const savedCat = localStorage.getItem(LOCAL_STORAGE_CAT_KEY);
 
         if (savedTx) {
           setTransactions(JSON.parse(savedTx));
@@ -129,13 +169,28 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
           setBudgets(DEFAULT_BUDGETS);
           localStorage.setItem(LOCAL_STORAGE_BUDGET_KEY, JSON.stringify(DEFAULT_BUDGETS));
         }
+
+        if (savedCat) {
+          setCustomCategories(JSON.parse(savedCat));
+        }
       } catch (e) {
-        console.error('Failed to load local storage demo data', e);
+        console.error('Failed to load local storage data', e);
         setTransactions(DEMO_TRANSACTIONS);
       }
       setLoading(false);
     }
   }, [currentUser, isDemoMode]);
+
+  // Derived list of all unique tags from transactions
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    transactions.forEach((tx) => {
+      if (tx.tags && Array.isArray(tx.tags)) {
+        tx.tags.forEach((tag) => tagSet.add(tag.trim().toLowerCase()));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [transactions]);
 
   const saveDemoTransactions = (list: Transaction[]) => {
     setTransactions(list);
@@ -155,17 +210,30 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const saveDemoCategories = (cList: Category[]) => {
+    setCustomCategories(cList);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_CAT_KEY, JSON.stringify(cList));
+    } catch (e) {
+      console.error('Failed saving demo categories', e);
+    }
+  };
+
   const addTransaction = async (t: Omit<Transaction, 'id' | 'createdAt'>) => {
     const createdAt = Date.now();
+    const cleanTags = (t.tags || []).map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+
     if (currentUser && !isDemoMode && firebaseDb) {
       await addDoc(collection(firebaseDb, 'transactions'), {
         ...t,
+        tags: cleanTags,
         userId: currentUser.uid,
         createdAt,
       });
     } else {
       const newTx: Transaction = {
         ...t,
+        tags: cleanTags,
         id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
         createdAt,
       };
@@ -174,11 +242,16 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateTransaction = async (id: string, t: Partial<Transaction>) => {
+    const updateData = { ...t };
+    if (t.tags) {
+      updateData.tags = t.tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+    }
+
     if (currentUser && !isDemoMode && firebaseDb) {
       const docRef = doc(firebaseDb, 'transactions', id);
-      await updateDoc(docRef, t);
+      await updateDoc(docRef, updateData);
     } else {
-      const updated = transactions.map((tx) => (tx.id === id ? { ...tx, ...t } : tx));
+      const updated = transactions.map((tx) => (tx.id === id ? { ...tx, ...updateData } : tx));
       saveDemoTransactions(updated);
     }
   };
@@ -190,6 +263,41 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const updated = transactions.filter((tx) => tx.id !== id);
       saveDemoTransactions(updated);
     }
+  };
+
+  const addCategory = async (
+    name: string,
+    type: TransactionType,
+    color: string = '#10B981',
+    icon: string = 'Tag'
+  ): Promise<Category> => {
+    const cleanName = name.trim();
+    const existing = categories.find((c) => c.name.toLowerCase() === cleanName.toLowerCase());
+    if (existing) return existing;
+
+    const newCat: Category = {
+      id: `cat_${Date.now()}`,
+      name: cleanName,
+      type,
+      color,
+      icon,
+      isCustom: true,
+    };
+
+    if (currentUser && !isDemoMode && firebaseDb) {
+      const docRef = await addDoc(collection(firebaseDb, 'categories'), {
+        userId: currentUser.uid,
+        name: cleanName,
+        type,
+        color,
+        icon,
+      });
+      newCat.id = docRef.id;
+    } else {
+      saveDemoCategories([...customCategories, newCat]);
+    }
+
+    return newCat;
   };
 
   const updateBudget = async (categoryId: string, monthlyLimit: number) => {
@@ -219,6 +327,12 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const resetToDemoData = () => {
     saveDemoTransactions(DEMO_TRANSACTIONS);
     saveDemoBudgets(DEFAULT_BUDGETS);
+    setCustomCategories([]);
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_CAT_KEY);
+    } catch (e) {
+      console.error('Failed clearing custom categories', e);
+    }
   };
 
   const filteredTransactions = useMemo(() => {
@@ -229,12 +343,18 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (filterOptions.category !== 'all' && t.category !== filterOptions.category) {
         return false;
       }
+      if (filterOptions.tag !== 'all') {
+        if (!t.tags || !t.tags.includes(filterOptions.tag.toLowerCase())) {
+          return false;
+        }
+      }
       if (filterOptions.searchTerm) {
         const queryStr = filterOptions.searchTerm.toLowerCase();
         const titleMatch = t.title.toLowerCase().includes(queryStr);
         const notesMatch = (t.notes || '').toLowerCase().includes(queryStr);
         const categoryMatch = t.category.toLowerCase().includes(queryStr);
-        if (!titleMatch && !notesMatch && !categoryMatch) {
+        const tagMatch = (t.tags || []).some((tag) => tag.toLowerCase().includes(queryStr));
+        if (!titleMatch && !notesMatch && !categoryMatch && !tagMatch) {
           return false;
         }
       }
@@ -291,6 +411,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         transactions,
         categories,
         budgets,
+        availableTags,
         loading: _loading,
         filterOptions,
         filteredTransactions,
@@ -299,6 +420,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        addCategory,
         updateBudget,
         resetToDemoData,
       }}

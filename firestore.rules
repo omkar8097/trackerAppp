@@ -3,14 +3,20 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Transactions Collection Rules
     match /transactions/{transactionId} {
-      allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Budgets Collection Rules
     match /budgets/{budgetId} {
-      allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Categories Collection Rules
+    match /categories/{categoryId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }

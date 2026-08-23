@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, Download, Plus, ArrowUpDown, Calendar } from 'lucide-react';
+import { Search, Filter, Download, Plus, ArrowUpDown, Calendar, Hash } from 'lucide-react';
 import { useExpense } from '../../context/ExpenseContext';
 import { exportToCSV } from '../../utils/formatters';
 
@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
-  const { categories, filterOptions, setFilterOptions, filteredTransactions } = useExpense();
+  const { categories, availableTags, filterOptions, setFilterOptions, filteredTransactions } = useExpense();
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterOptions((prev) => ({ ...prev, searchTerm: e.target.value }));
@@ -20,6 +20,10 @@ export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterOptions((prev) => ({ ...prev, category: e.target.value }));
+  };
+
+  const handleTagChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterOptions((prev) => ({ ...prev, tag: e.target.value }));
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -49,13 +53,13 @@ export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
             type="text"
             value={filterOptions.searchTerm}
             onChange={handleSearchChange}
-            placeholder="Search by description, notes, or category..."
+            placeholder="Search by description, notes, category, or #tags..."
             className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-white placeholder-slate-600 transition-colors"
           />
         </div>
 
         {/* Primary Type Pills */}
-        <div className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+        <div className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs overflow-x-auto no-scrollbar">
           {(['all', 'income', 'expense'] as const).map((t) => (
             <button
               key={t}
@@ -91,8 +95,8 @@ export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
         </div>
       </div>
 
-      {/* Secondary Filters: Category, Date Range, Sort */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-800/80">
+      {/* Secondary Filters: Category, Tag, Date Range, Sort */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-3 border-t border-slate-800/80">
         
         {/* Category Dropdown */}
         <div>
@@ -108,6 +112,25 @@ export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
             {categories.map((c) => (
               <option key={c.id} value={c.name}>
                 {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Tag Dropdown */}
+        <div>
+          <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
+            <Hash className="w-3 h-3 text-slate-500" /> Tag
+          </label>
+          <select
+            value={filterOptions.tag}
+            onChange={handleTagChange}
+            className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:border-emerald-500 text-slate-200 font-mono"
+          >
+            <option value="all">All Tags</option>
+            {availableTags.map((tag) => (
+              <option key={tag} value={tag}>
+                #{tag}
               </option>
             ))}
           </select>
@@ -140,7 +163,7 @@ export const TransactionFilter: React.FC<Props> = ({ onAddClick }) => {
         </div>
 
         {/* Sort By Dropdown */}
-        <div>
+        <div className="col-span-2 sm:col-span-1">
           <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
             <ArrowUpDown className="w-3 h-3 text-slate-500" /> Sort Order
           </label>

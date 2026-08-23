@@ -4,17 +4,23 @@ import { useAuth } from '../context/AuthContext';
 import { TransactionFormModal } from './transactions/TransactionFormModal';
 import { AuthModal } from './auth/AuthModal';
 
-export const MobileBottomNav: React.FC = () => {
+interface Props {
+  activeTab: 'dashboard' | 'analytics';
+  setActiveTab: (tab: 'dashboard' | 'analytics') => void;
+}
+
+export const MobileBottomNav: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const { currentUser } = useAuth();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics' | 'transactions'>('dashboard');
 
-  const scrollToSection = (id: string, tab: 'dashboard' | 'analytics' | 'transactions') => {
+  const handleNavClick = (tab: 'dashboard' | 'analytics', sectionId?: string) => {
     setActiveTab(tab);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (sectionId) {
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
     }
   };
 
@@ -23,9 +29,9 @@ export const MobileBottomNav: React.FC = () => {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800/80 px-3 py-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl">
         <div className="max-w-md mx-auto flex items-center justify-around relative">
           
-          {/* Dashboard Tab */}
+          {/* Home / Dashboard Tab */}
           <button
-            onClick={() => scrollToSection('summary-section', 'dashboard')}
+            onClick={() => handleNavClick('dashboard')}
             className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${
               activeTab === 'dashboard' ? 'text-emerald-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
             }`}
@@ -36,7 +42,7 @@ export const MobileBottomNav: React.FC = () => {
 
           {/* Analytics Tab */}
           <button
-            onClick={() => scrollToSection('charts-section', 'analytics')}
+            onClick={() => handleNavClick('analytics')}
             className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${
               activeTab === 'analytics' ? 'text-emerald-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
             }`}
@@ -56,12 +62,10 @@ export const MobileBottomNav: React.FC = () => {
             </button>
           </div>
 
-          {/* Transactions Tab */}
+          {/* History / Transactions Tab */}
           <button
-            onClick={() => scrollToSection('transactions-section', 'transactions')}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all ${
-              activeTab === 'transactions' ? 'text-emerald-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            onClick={() => handleNavClick('dashboard', 'transactions-section')}
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-slate-400 hover:text-slate-200 transition-all"
           >
             <ReceiptText className="w-5 h-5" />
             <span className="text-[10px]">History</span>

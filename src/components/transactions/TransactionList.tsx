@@ -71,6 +71,15 @@ export const TransactionList: React.FC = () => {
                           <div>
                             <p className="font-semibold text-slate-200 group-hover:text-white transition-colors">{tx.title}</p>
                             {tx.notes && <p className="text-[11px] text-slate-400 truncate max-w-xs">{tx.notes}</p>}
+                            {tx.tags && tx.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {tx.tags.map((tag) => (
+                                  <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-950 border border-slate-800 text-emerald-400 font-mono">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>

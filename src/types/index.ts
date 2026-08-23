@@ -7,6 +7,7 @@ export interface Transaction {
   amount: number;
   type: TransactionType;
   category: string;
+  tags?: string[];
   date: string; // ISO date string YYYY-MM-DD
   notes?: string;
   paymentMethod?: 'cash' | 'card' | 'bank_transfer' | 'digital_wallet';
@@ -15,10 +16,12 @@ export interface Transaction {
 
 export interface Category {
   id: string;
+  userId?: string;
   name: string;
   type: TransactionType;
   icon: string;
   color: string;
+  isCustom?: boolean;
 }
 
 export interface Budget {
@@ -51,6 +54,7 @@ export interface FilterOptions {
   searchTerm: string;
   type: 'all' | 'income' | 'expense';
   category: string;
+  tag: string;
   startDate: string;
   endDate: string;
   sortBy: 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc';
