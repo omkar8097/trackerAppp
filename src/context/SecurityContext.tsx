@@ -42,6 +42,13 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [isBiometricSupported, setIsBiometricSupported] = useState<boolean>(false);
 
+  // Force unlock if security lock is disabled or PIN is empty
+  useEffect(() => {
+    if (!securitySettings.isLockEnabled || !securitySettings.pin) {
+      setIsLocked(false);
+    }
+  }, [securitySettings.isLockEnabled, securitySettings.pin]);
+
   // Check WebAuthn Biometric support
   useEffect(() => {
     if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {

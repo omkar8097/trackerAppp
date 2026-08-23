@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expenseflow-v4';
+const CACHE_NAME = 'expenseflow-v5';
 
 // Install Event - Pre-cache core shell using relative paths
 self.addEventListener('install', (event) => {

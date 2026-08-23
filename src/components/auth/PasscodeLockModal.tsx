@@ -7,10 +7,12 @@ export const PasscodeLockModal: React.FC = () => {
   const [pinInput, setPinInput] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   useEffect(() => {
     setPinInput('');
     setErrorMsg(null);
+    setShowConfirmReset(false);
   }, [isLocked]);
 
   // Handle Physical Keyboard Numbers
@@ -67,10 +69,9 @@ export const PasscodeLockModal: React.FC = () => {
     }
   };
 
-  const handleResetLock = () => {
-    if (window.confirm('Reset Security PIN Lock? This will remove the 4-digit lock and open ExpenseFlow immediately.')) {
-      resetSecurityLock();
-    }
+  const handleConfirmResetLock = () => {
+    resetSecurityLock();
+    setShowConfirmReset(false);
   };
 
   return (
@@ -166,13 +167,35 @@ export const PasscodeLockModal: React.FC = () => {
 
         {/* Forgot PIN / Emergency Reset Lock */}
         <div className="pt-4 border-t border-slate-900 w-full max-w-[280px]">
-          <button
-            type="button"
-            onClick={handleResetLock}
-            className="text-xs font-semibold text-rose-400/80 hover:text-rose-300 transition-colors py-1 flex items-center justify-center gap-1.5 mx-auto"
-          >
-            <RotateCcw className="w-3.5 h-3.5" /> Forgot PIN? Reset Lock
-          </button>
+          {!showConfirmReset ? (
+            <button
+              type="button"
+              onClick={() => setShowConfirmReset(true)}
+              className="text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors py-1 flex items-center justify-center gap-1.5 mx-auto"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Forgot PIN? Reset Lock
+            </button>
+          ) : (
+            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 space-y-2 animate-in fade-in duration-150">
+              <p className="text-[11px] text-rose-300 font-medium">Clear 4-digit PIN & unlock ExpenseFlow?</p>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmReset(false)}
+                  className="px-3 py-1 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-900 border border-slate-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmResetLock}
+                  className="px-3 py-1 rounded-xl text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 shadow-md shadow-rose-500/20"
+                >
+                  Yes, Unlock & Reset PIN
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
