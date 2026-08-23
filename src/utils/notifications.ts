@@ -36,7 +36,7 @@ export async function enableNotificationsWithTest(): Promise<{ success: boolean;
 
     if (permission === 'granted') {
       await sendLocalNotification('🔔 Notifications Active!', {
-        body: 'ExpenseFlow will notify you for every transaction and budget alert.',
+        body: 'ExpenseFlow will notify you daily at 9:00 PM IST with your financial summary and for transaction entries.',
         tag: 'notifications-test'
       });
       return { success: true, state: 'granted', message: 'Mobile notifications enabled!' };
@@ -82,4 +82,36 @@ export async function sendLocalNotification(title: string, options?: Notificatio
   } catch (e) {
     console.error('[PWA Notifications] Notification display error:', e);
   }
+}
+
+let reminderTimerId: ReturnType<typeof setTimeout> | null = null;
+
+export function scheduleDaily9PMReminder(getDailySummary: () => { todayExpense: number; todayIncome: number; todayCount: number }) {
+  if (reminderTimerId) {
+    clearTimeout(reminderTimerId);
+  }
+
+  const now = new Date();
+  const target = new Date();
+  target.setHours(21, 0, 0, 0); // 9:00 PM IST (21:00)
+
+  if (now >= target) {
+    target.setDate(target.getDate() + 1); // Next day 9 PM if past 9 PM today
+  }
+
+  const msUntilTarget = target.getTime() - now.getTime();
+
+  reminderTimerId = setTimeout(async () => {
+    const summary = getDailySummary();
+    const formattedExpense = summary.todayExpense.toLocaleString('en-IN');
+    const formattedIncome = summary.todayIncome.toLocaleString('en-IN');
+
+    await sendLocalNotification('🌙 Daily Expense Summary (9:00 PM IST)', {
+      body: `Today: Spent ₹${formattedExpense} | Income +₹${formattedIncome} (${summary.todayCount} entries). Tap to review your tracker!`,
+      tag: 'daily-9pm-summary'
+    });
+
+    // Re-schedule for the next day's 9:00 PM
+    scheduleDaily9PMReminder(getDailySummary);
+  }, msUntilTarget);
 }

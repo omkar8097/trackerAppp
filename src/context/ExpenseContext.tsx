@@ -15,7 +15,7 @@ import { useAuth } from './AuthContext';
 import type { Transaction, Category, Budget, FinancialSummary, FilterOptions, TransactionType } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_BUDGETS, DEMO_TRANSACTIONS } from '../utils/defaultData';
 import { getCurrentMonthISO } from '../utils/formatters';
-import { sendLocalNotification } from '../utils/notifications';
+import { sendLocalNotification, scheduleDaily9PMReminder } from '../utils/notifications';
 
 interface ExpenseContextType {
   transactions: Transaction[];
@@ -181,6 +181,17 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setLoading(false);
     }
   }, [currentUser, isDemoMode]);
+
+  // Schedule Daily 9:00 PM IST Notification Reminder & Financial Summary
+  useEffect(() => {
+    scheduleDaily9PMReminder(() => {
+      const todayISO = new Date().toISOString().split('T')[0];
+      const todayTx = transactions.filter((t) => t.date === todayISO);
+      const todayExpense = todayTx.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      const todayIncome = todayTx.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      return { todayExpense, todayIncome, todayCount: todayTx.length };
+    });
+  }, [transactions]);
 
   // Derived list of all unique tags from transactions
   const availableTags = useMemo(() => {
