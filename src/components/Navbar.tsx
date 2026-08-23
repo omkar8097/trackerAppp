@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import { Wallet, Settings, LogIn, LogOut, Sparkles, RefreshCw, Database, Download } from 'lucide-react';
+import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useExpense } from '../context/ExpenseContext';
 import { usePWA } from '../hooks/usePWA';
-import { FirebaseSetupModal } from './FirebaseSetupModal';
 import { AuthModal } from './auth/AuthModal';
 import { formatCurrency } from '../utils/formatters';
 
 export const Navbar: React.FC = () => {
-  const { currentUser, isDemoMode, logoutUser, configState } = useAuth();
+  const { currentUser, isDemoMode, logoutUser } = useAuth();
   const { summary, resetToDemoData } = useExpense();
   const { isInstallable, isInstalled, promptInstall } = usePWA();
   
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-
 
   return (
     <>
@@ -33,7 +30,7 @@ export const Navbar: React.FC = () => {
                 <h1 className="font-bold text-lg text-white tracking-tight">ExpenseFlow</h1>
                 {isDemoMode ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Demo Mode
+                    <Sparkles className="w-3 h-3" /> Offline Mode
                   </span>
                 ) : (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
@@ -80,24 +77,12 @@ export const Navbar: React.FC = () => {
             {isDemoMode && (
               <button
                 onClick={resetToDemoData}
-                title="Reset sample demo data"
+                title="Reset sample offline data"
                 className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Reset Demo Data</span>
+                <RefreshCw className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Reset Sample Data</span>
               </button>
             )}
-
-
-            <button
-              onClick={() => setIsConfigOpen(true)}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors relative"
-              title="Firebase Settings"
-            >
-              <Settings className="w-4 h-4" />
-              {!configState.isConfigured && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse" />
-              )}
-            </button>
 
             {currentUser ? (
               <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
@@ -128,8 +113,7 @@ export const Navbar: React.FC = () => {
         </div>
       </header>
 
-      {/* Modals */}
-      <FirebaseSetupModal isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
+      {/* Auth Modal */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </>
   );

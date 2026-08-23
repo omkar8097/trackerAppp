@@ -2,9 +2,7 @@
 
 ## Overview
 
-**ExpenseFlow** is a modern, responsive Progressive Web Application (PWA) built with React 19, TypeScript, Vite, Tailwind CSS v4, and Firebase. It provides personal financial tracking, budget management, and interactive charts with seamless dual-mode capability:
-1. **Cloud Mode**: Real-time Firebase Authentication & Firestore data synchronization per user.
-2. **Demo Mode**: Full offline/zero-configuration experience powered by `localStorage`.
+**ExpenseFlow** is a modern, responsive Progressive Web Application (PWA) built with React 19, TypeScript, Vite, Tailwind CSS v4, and Firebase. It provides personal financial tracking, budget management, and interactive charts with real-time Firebase Authentication & Firestore data synchronization per user.
 
 ---
 
@@ -36,8 +34,7 @@ expense-tracker-firebase/
     ├── index.css                # Global Tailwind CSS imports
     ├── App.css                  # Custom styling utilities
     ├── components/
-    │   ├── Navbar.tsx           # Navigation bar with user status & settings modal trigger
-    │   ├── FirebaseSetupModal.tsx # Runtime Firebase credentials setup modal
+    │   ├── Navbar.tsx           # Navigation bar with user status & auth modal trigger
     │   ├── PWAInstallPrompt.tsx # PWA installation banner component
     │   ├── auth/
     │   │   └── AuthModal.tsx    # Auth modal (Email/Password & Google OAuth)
@@ -50,18 +47,18 @@ expense-tracker-firebase/
     │       ├── TransactionFilter.tsx     # Search, filter by category/type/date, and sorting
     │       └── TransactionFormModal.tsx  # Modal for adding & editing transactions
     ├── context/
-    │   ├── AuthContext.tsx      # Firebase auth state & demo mode context provider
+    │   ├── AuthContext.tsx      # Firebase auth state context provider
     │   └── ExpenseContext.tsx   # Transactions, budgets, filters, & summary calculations
     ├── firebase/
-    │   ├── config.ts            # Environment & localStorage Firebase configuration loader
+    │   ├── config.ts            # Environment variable Firebase configuration loader
     │   └── firebase.ts          # Firebase app, auth, & firestore instance initialization
     ├── hooks/
     │   └── usePWA.ts            # PWA installation event listener hook
     ├── types/
     │   └── index.ts             # Global TypeScript interface & type definitions
     └── utils/
-        ├── defaultData.ts       # Default categories, sample demo transactions & budget benchmarks
-        └── formatters.ts        # Currency, date, and percentage formatting helper functions
+        ├── defaultData.ts       # Default categories, sample offline transactions & budget benchmarks
+        └── formatters.ts        # Currency (INR / ₹), date, and percentage formatting helper functions
 ```
 
 ---
@@ -94,37 +91,38 @@ The application is pre-configured for automated deployment to **GitHub Pages** v
 
 ## Firebase Credential Protection & Security Best Practices
 
-Client-side Web applications (React/Vite) inherently compile Firebase Web API keys into client JS bundles. To properly secure your application and credentials:
+1. **Never Store Credentials in LocalStorage or UI Inputs**:
+   - Credentials come strictly from build environment variables (`import.meta.env.VITE_FIREBASE_*`).
+   - No setup modal or interactive forms store keys in browser `localStorage`.
 
-1. **Never Commit Secrets to Git**:
+2. **Never Commit Secrets to Git**:
    - `.env` and `.env.*` files are explicitly ignored in [.gitignore](file:///c:/Users/USER/.gemini/antigravity/scratch/expense-tracker-firebase/.gitignore).
    - Use `.env.example` as a safe, unpopulated template for reference.
 
-2. **Restrict API Key Domain Origins in Google Cloud Console**:
+3. **Restrict API Key Domain Origins in Google Cloud Console**:
    - Navigate to **Google Cloud Console > APIs & Services > Credentials**.
    - Edit your Firebase Web API Key and add **Website Restrictions** (HTTP Referrers).
    - Authorize only your domain (e.g., `https://<your-username>.github.io/*` and `localhost`).
 
-3. **Enforce Database Protection with Firestore Security Rules**:
-   - Firebase Web API keys serve to identify your project, not to authorize data access.
+4. **Enforce Database Protection with Firestore Security Rules**:
    - Database protection is strictly enforced by deploying [firestore.rules](file:///c:/Users/USER/.gemini/antigravity/scratch/expense-tracker-firebase/firestore.rules) in the Firebase Console (Firestore Database > Rules):
      ```rules
      rules_version = '2';
      service cloud.firestore {
        match /databases/{database}/documents {
          match /transactions/{transactionId} {
-           allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
-           allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+           allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+           allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
          }
          match /budgets/{budgetId} {
-           allow read, write: if request.auth != null && request.auth.uid == request.resource.data.userId;
-           allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+           allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+           allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
          }
        }
      }
      ```
 
-4. **Authorized Authorized Domains in Firebase Auth**:
+5. **Authorized Domains in Firebase Auth**:
    - In **Firebase Console > Authentication > Settings > Authorized domains**, add `<your-username>.github.io` to allow Google OAuth logins from your GitHub Pages URL.
 
 ---

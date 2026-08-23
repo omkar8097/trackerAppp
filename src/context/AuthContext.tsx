@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { firebaseAuth, firebaseGoogleProvider } from '../firebase/firebase';
-import { getStoredFirebaseConfig, saveFirebaseConfig, clearFirebaseConfig } from '../firebase/config';
+import { getStoredFirebaseConfig } from '../firebase/config';
 import type { FirebaseConfigState } from '../types';
 
 interface AuthContextType {
@@ -21,8 +21,6 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   logoutUser: () => Promise<void>;
   enableDemoMode: () => void;
-  updateFirebaseCredentials: (newConfig: Omit<FirebaseConfigState, 'isConfigured' | 'isDemoMode'>) => void;
-  resetFirebaseCredentials: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,7 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [configState, setConfigState] = useState<FirebaseConfigState>(getStoredFirebaseConfig());
+  const [configState] = useState<FirebaseConfigState>(getStoredFirebaseConfig());
   const [isDemoMode, setIsDemoMode] = useState<boolean>(!configState.isConfigured);
 
   useEffect(() => {
@@ -82,23 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsDemoMode(true);
   };
 
-  const updateFirebaseCredentials = (newConfig: Omit<FirebaseConfigState, 'isConfigured' | 'isDemoMode'>) => {
-    saveFirebaseConfig(newConfig);
-    const updated = getStoredFirebaseConfig();
-    setConfigState(updated);
-    if (updated.isConfigured) {
-      setIsDemoMode(false);
-    }
-    window.location.reload();
-  };
-
-  const resetFirebaseCredentials = () => {
-    clearFirebaseConfig();
-    setConfigState(getStoredFirebaseConfig());
-    setIsDemoMode(true);
-    window.location.reload();
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -111,8 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithGoogle,
         logoutUser,
         enableDemoMode,
-        updateFirebaseCredentials,
-        resetFirebaseCredentials,
       }}
     >
       {children}
