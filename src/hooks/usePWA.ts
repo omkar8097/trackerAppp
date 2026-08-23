@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { sendLocalNotification, requestNotificationPermission } from '../utils/notifications';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -66,6 +67,12 @@ export function usePWA() {
       setIsInstallable(false);
       setDeferredPrompt(null);
       console.log('[PWA] App successfully installed');
+
+      // Trigger Install Welcome Notification
+      sendLocalNotification('🎉 ExpenseFlow Installed!', {
+        body: 'Welcome to ExpenseFlow! App is installed on your device home screen for fast offline tracking.',
+        tag: 'pwa-welcome'
+      });
     };
 
     // 5. Online/Offline Listeners
@@ -88,12 +95,20 @@ export function usePWA() {
 
   const promptInstall = async () => {
     if (!deferredPrompt) return;
+    
+    // Request Notification permission ahead of install prompt
+    await requestNotificationPermission();
+
     await deferredPrompt.prompt();
     const choiceResult = await deferredPrompt.userChoice;
     if (choiceResult.outcome === 'accepted') {
       console.log('[PWA] User accepted install prompt');
       setIsInstallable(false);
       setDeferredPrompt(null);
+      sendLocalNotification('🎉 ExpenseFlow Installed!', {
+        body: 'Welcome to ExpenseFlow! App is ready on your home screen.',
+        tag: 'pwa-install'
+      });
     } else {
       console.log('[PWA] User dismissed install prompt');
     }

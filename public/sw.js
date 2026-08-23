@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expenseflow-v3';
+const CACHE_NAME = 'expenseflow-v4';
 
 // Install Event - Pre-cache core shell using relative paths
 self.addEventListener('install', (event) => {
@@ -17,7 +17,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate Event - Clean up stale v1 caches
+// Activate Event - Clean up stale caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -30,6 +30,23 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => self.clients.claim())
+  );
+});
+
+// Notification Click Event - Open or focus PWA app window
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('./');
+      }
+    })
   );
 });
 

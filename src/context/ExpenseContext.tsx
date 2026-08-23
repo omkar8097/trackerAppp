@@ -15,6 +15,7 @@ import { useAuth } from './AuthContext';
 import type { Transaction, Category, Budget, FinancialSummary, FilterOptions, TransactionType } from '../types';
 import { DEFAULT_CATEGORIES, DEFAULT_BUDGETS, DEMO_TRANSACTIONS } from '../utils/defaultData';
 import { getCurrentMonthISO } from '../utils/formatters';
+import { sendLocalNotification } from '../utils/notifications';
 
 interface ExpenseContextType {
   transactions: Transaction[];
@@ -256,6 +257,15 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       };
       saveDemoTransactions([newTx, ...transactions]);
     }
+
+    // Trigger Native Mobile PWA Local Notification
+    sendLocalNotification(
+      `${t.type === 'income' ? '💰 Income Entry Added' : '💳 Expense Entry Recorded'}`,
+      {
+        body: `${t.title} • ₹${t.amount.toLocaleString('en-IN')} (${t.category})`,
+        tag: `tx_${Date.now()}`
+      }
+    );
   };
 
   const updateTransaction = async (id: string, t: Partial<Transaction>) => {
