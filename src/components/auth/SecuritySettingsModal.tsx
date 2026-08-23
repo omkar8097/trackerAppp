@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Shield, Lock, Fingerprint, Clock, Check, AlertCircle } from 'lucide-react';
+import { X, Shield, Lock, Fingerprint, Clock, Check, AlertCircle, ShieldOff } from 'lucide-react';
 import { useSecurity } from '../../context/SecurityContext';
 
 interface Props {
@@ -34,6 +34,19 @@ export const SecuritySettingsModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setErrorMsg(null);
     setSuccessMsg(null);
 
+    // If turning OFF lock
+    if (!isLockEnabled) {
+      updateSecuritySettings({
+        isLockEnabled: false,
+        pin: '',
+        isBiometricEnabled: false,
+        autoLockMinutes: 0,
+      });
+      setSuccessMsg('App Passcode Lock has been turned OFF.');
+      setTimeout(() => onClose(), 800);
+      return;
+    }
+
     // If enabling lock or changing existing PIN
     if (isLockEnabled) {
       if (!securitySettings.pin && (!newPin || newPin.length !== 4)) {
@@ -56,9 +69,9 @@ export const SecuritySettingsModal: React.FC<Props> = ({ isOpen, onClose }) => {
     const finalPin = newPin ? newPin : securitySettings.pin;
 
     updateSecuritySettings({
-      isLockEnabled,
-      pin: isLockEnabled ? finalPin : '',
-      isBiometricEnabled: isLockEnabled ? isBiometricEnabled : false,
+      isLockEnabled: true,
+      pin: finalPin,
+      isBiometricEnabled,
       autoLockMinutes,
     });
 
@@ -66,6 +79,18 @@ export const SecuritySettingsModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setTimeout(() => {
       onClose();
     }, 800);
+  };
+
+  const handleTurnOffLock = () => {
+    updateSecuritySettings({
+      isLockEnabled: false,
+      pin: '',
+      isBiometricEnabled: false,
+      autoLockMinutes: 0,
+    });
+    setIsLockEnabled(false);
+    setSuccessMsg('App Security Lock turned OFF successfully.');
+    setTimeout(() => onClose(), 800);
   };
 
   const handleImmediateLock = () => {
@@ -129,7 +154,7 @@ export const SecuritySettingsModal: React.FC<Props> = ({ isOpen, onClose }) => {
           </div>
 
           {/* PIN Setup Input Fields */}
-          {isLockEnabled && (
+          {isLockEnabled ? (
             <div className="space-y-3 pt-1 border-t border-slate-800/80">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
@@ -195,18 +220,34 @@ export const SecuritySettingsModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 </select>
               </div>
             </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center space-y-2">
+              <ShieldOff className="w-8 h-8 text-slate-500 mx-auto" />
+              <p className="text-xs text-slate-400">
+                App Lock is currently disabled. Anyone with access to your device can open ExpenseFlow.
+              </p>
+            </div>
           )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-800">
             {securitySettings.isLockEnabled && securitySettings.pin ? (
-              <button
-                type="button"
-                onClick={handleImmediateLock}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-rose-300 transition-colors flex items-center gap-1.5"
-              >
-                <Lock className="w-3.5 h-3.5" /> Lock Now
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTurnOffLock}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 transition-colors flex items-center gap-1"
+                >
+                  <ShieldOff className="w-3.5 h-3.5" /> Turn Off Lock
+                </button>
+                <button
+                  type="button"
+                  onClick={handleImmediateLock}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors flex items-center gap-1"
+                >
+                  <Lock className="w-3.5 h-3.5" /> Lock Now
+                </button>
+              </div>
             ) : <div />}
 
             <div className="flex items-center gap-2">
