@@ -103,7 +103,12 @@ expense-tracker-firebase/
 - Fires local PWA notifications when the app is installed or when transaction entries are added/updated.
 - Service Worker `notificationclick` listener focuses or opens the PWA window when a notification is tapped.
 
-### 7. Mobile-First UI & PWA Installability
+### 7. Daily 9:00 PM IST Financial Summary Notification Scheduler
+- `scheduleDaily9PMReminder()` in `src/utils/notifications.ts` & `ExpenseContext.tsx` calculates today's total expenses, total income, and entry count.
+- Triggers a recurring daily 9:00 PM IST notification: `"🌙 Daily Expense Summary (9:00 PM IST): Today: Spent ₹X | Income +₹Y (Z entries). Tap to review!"`
+- Paired with standing background cron schedule (`0 21 * * *`).
+
+### 8. Mobile-First UI & PWA Installability
 - Mobile bottom navigation bar (`MobileBottomNav.tsx`) with center floating FAB `+` button.
 - Bottom sheet modals (`rounded-t-3xl`) for touch devices.
 - Service Worker (`sw.js`) registered using relative `BASE_URL` scope (`./sw.js`).
