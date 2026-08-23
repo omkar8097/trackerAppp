@@ -322,14 +322,19 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
 
     if (currentUser && !isDemoMode && firebaseDb) {
-      const docRef = await addDoc(collection(firebaseDb, 'categories'), {
-        userId: currentUser.uid,
-        name: cleanName,
-        type,
-        color,
-        icon,
-      });
-      newCat.id = docRef.id;
+      try {
+        const docRef = await addDoc(collection(firebaseDb, 'categories'), {
+          userId: currentUser.uid,
+          name: cleanName,
+          type,
+          color,
+          icon,
+        });
+        newCat.id = docRef.id;
+      } catch (err) {
+        console.warn('[PWA] Firestore category permission error, falling back to local storage:', err);
+        saveDemoCategories([...customCategories, newCat]);
+      }
     } else {
       saveDemoCategories([...customCategories, newCat]);
     }
