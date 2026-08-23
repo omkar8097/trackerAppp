@@ -1,6 +1,35 @@
+const NOTIF_ENABLED_STORAGE_KEY = 'expense_tracker_notifications_enabled';
+
 export function getNotificationPermissionState(): 'granted' | 'denied' | 'default' | 'unsupported' {
   if (!('Notification' in window)) return 'unsupported';
   return Notification.permission;
+}
+
+export function isNotificationEnabledByUser(): boolean {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission !== 'granted') return false;
+
+  try {
+    const saved = localStorage.getItem(NOTIF_ENABLED_STORAGE_KEY);
+    if (saved !== null) {
+      return JSON.parse(saved) === true;
+    }
+  } catch (e) {
+    console.error('Failed reading notification preference', e);
+  }
+  return Notification.permission === 'granted';
+}
+
+export function setNotificationEnabledByUser(enabled: boolean) {
+  try {
+    localStorage.setItem(NOTIF_ENABLED_STORAGE_KEY, JSON.stringify(enabled));
+  } catch (e) {
+    console.error('Failed saving notification preference', e);
+  }
+  if (!enabled && reminderTimerId) {
+    clearTimeout(reminderTimerId);
+    reminderTimerId = null;
+  }
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -23,36 +52,44 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return false;
 }
 
-export async function enableNotificationsWithTest(): Promise<{ success: boolean; state: string; message: string }> {
+export async function toggleNotifications(): Promise<{ isEnabled: boolean; state: string; message: string }> {
   if (!('Notification' in window)) {
-    return { success: false, state: 'unsupported', message: 'Web Notifications are not supported in this browser.' };
+    return { isEnabled: false, state: 'unsupported', message: 'Notifications are not supported in this browser.' };
   }
 
-  try {
+  const currentlyEnabled = isNotificationEnabledByUser();
+
+  if (currentlyEnabled) {
+    // Turn OFF
+    setNotificationEnabledByUser(false);
+    return { isEnabled: false, state: Notification.permission, message: 'Notifications & Daily Reminders turned OFF.' };
+  } else {
+    // Turn ON
     let permission = Notification.permission;
     if (permission !== 'granted') {
       permission = await Notification.requestPermission();
     }
 
     if (permission === 'granted') {
+      setNotificationEnabledByUser(true);
       await sendLocalNotification('🔔 Notifications Active!', {
-        body: 'ExpenseFlow will notify you daily at 9:00 PM IST with your financial summary and for transaction entries.',
+        body: 'ExpenseFlow will notify you daily at 9:00 PM IST with your financial summary.',
         tag: 'notifications-test'
       });
-      return { success: true, state: 'granted', message: 'Mobile notifications enabled!' };
+      return { isEnabled: true, state: 'granted', message: 'Notifications & Daily 9 PM Reminders turned ON!' };
     } else if (permission === 'denied') {
-      return { success: false, state: 'denied', message: 'Notifications blocked in browser/device settings.' };
+      setNotificationEnabledByUser(false);
+      return { isEnabled: false, state: 'denied', message: 'Notifications blocked in browser settings.' };
     } else {
-      return { success: false, state: 'default', message: 'Notification prompt dismissed.' };
+      setNotificationEnabledByUser(false);
+      return { isEnabled: false, state: 'default', message: 'Notification prompt dismissed.' };
     }
-  } catch (e: any) {
-    return { success: false, state: 'error', message: e?.message || 'Failed to request notification permission.' };
   }
 }
 
 export async function sendLocalNotification(title: string, options?: NotificationOptions) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') {
-    console.log('[PWA Notifications] Notification permission not granted or unsupported.');
+  if (!isNotificationEnabledByUser()) {
+    console.log('[PWA Notifications] Notifications are turned OFF by user setting.');
     return;
   }
 
@@ -89,6 +126,11 @@ let reminderTimerId: ReturnType<typeof setTimeout> | null = null;
 export function scheduleDaily9PMReminder(getDailySummary: () => { todayExpense: number; todayIncome: number; todayCount: number }) {
   if (reminderTimerId) {
     clearTimeout(reminderTimerId);
+    reminderTimerId = null;
+  }
+
+  if (!isNotificationEnabledByUser()) {
+    return;
   }
 
   const now = new Date();

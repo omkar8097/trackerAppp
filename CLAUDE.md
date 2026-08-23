@@ -99,14 +99,15 @@ expense-tracker-firebase/
 - Choice between **Export Filtered View** and **Export All History**.
 
 ### 6. Mobile & Web Push Notifications
-- Mobile notification permission requester (`notifications.ts`) and header toggle button (**`🔔 Enable Alerts`**).
-- Fires local PWA notifications when the app is installed or when transaction entries are added/updated.
+- Mobile notification permission requester (`notifications.ts`) and header toggle button (**`Alerts ON`** / **`Alerts OFF`**).
+- Complete **Turn Off** option (`toggleNotifications()`, `isNotificationEnabledByUser()`) with preference persistence in `localStorage`.
+- Fires local PWA notifications when installed or when transaction entries are added/updated (when enabled).
 - Service Worker `notificationclick` listener focuses or opens the PWA window when a notification is tapped.
 
 ### 7. Daily 9:00 PM IST Financial Summary Notification Scheduler
 - `scheduleDaily9PMReminder()` in `src/utils/notifications.ts` & `ExpenseContext.tsx` calculates today's total expenses, total income, and entry count.
-- Triggers a recurring daily 9:00 PM IST notification: `"🌙 Daily Expense Summary (9:00 PM IST): Today: Spent ₹X | Income +₹Y (Z entries). Tap to review!"`
-- Paired with standing background cron schedule (`0 21 * * *`).
+- Triggers a recurring daily 9:00 PM IST notification when enabled: `"🌙 Daily Expense Summary (9:00 PM IST): Today: Spent ₹X | Income +₹Y (Z entries). Tap to review!"`
+- Respects user Turn Off toggle preference and automatically pauses timers when turned OFF.
 
 ### 8. Passcode 4-Digit PIN & Biometric Lock (Fingerprint / Face ID)
 - `SecurityContext.tsx` manages app lock state, PIN verification, WebAuthn biometric unlock, and auto-lock on page visibility change.

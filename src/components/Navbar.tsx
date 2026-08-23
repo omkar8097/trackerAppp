@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download, LayoutDashboard, PieChart, Bell, BellRing, ShieldCheck, Lock } from 'lucide-react';
+import { Wallet, LogIn, LogOut, Sparkles, RefreshCw, Database, Download, LayoutDashboard, PieChart, BellRing, BellOff, ShieldCheck, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useExpense } from '../context/ExpenseContext';
 import { usePWA } from '../hooks/usePWA';
@@ -7,7 +7,7 @@ import { useSecurity } from '../context/SecurityContext';
 import { AuthModal } from './auth/AuthModal';
 import { SecuritySettingsModal } from './auth/SecuritySettingsModal';
 import { formatCurrency } from '../utils/formatters';
-import { enableNotificationsWithTest, getNotificationPermissionState } from '../utils/notifications';
+import { isNotificationEnabledByUser, toggleNotifications } from '../utils/notifications';
 
 interface Props {
   activeTab: 'dashboard' | 'analytics';
@@ -22,16 +22,16 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
-  const [notifState, setNotifState] = useState<string>('default');
+  const [notifActive, setNotifActive] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setNotifState(getNotificationPermissionState());
+    setNotifActive(isNotificationEnabledByUser());
   }, []);
 
   const handleToggleNotifications = async () => {
-    const res = await enableNotificationsWithTest();
-    setNotifState(res.state);
+    const res = await toggleNotifications();
+    setNotifActive(res.isEnabled);
     setToastMessage(res.message);
     setTimeout(() => setToastMessage(null), 4000);
   };
@@ -148,19 +148,19 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab }) => {
             <button
               onClick={handleToggleNotifications}
               className={`p-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
-                notifState === 'granted'
+                notifActive
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
               }`}
-              title={notifState === 'granted' ? 'Notifications Active' : 'Tap to Enable Mobile Notifications'}
+              title={notifActive ? 'Tap to Turn OFF Notifications & Reminders' : 'Tap to Turn ON Mobile Notifications & Daily 9 PM Reminders'}
             >
-              {notifState === 'granted' ? (
+              {notifActive ? (
                 <BellRing className="w-4 h-4 text-emerald-400" />
               ) : (
-                <Bell className="w-4 h-4 text-slate-400" />
+                <BellOff className="w-4 h-4 text-slate-400" />
               )}
               <span className="hidden sm:inline">
-                {notifState === 'granted' ? 'Alerts Active' : 'Enable Alerts'}
+                {notifActive ? 'Alerts ON' : 'Alerts OFF'}
               </span>
             </button>
 
