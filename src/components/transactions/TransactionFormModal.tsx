@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, IndianRupee, Calendar, Tag as TagIcon, CreditCard, AlignLeft, Plus, Hash } from 'lucide-react';
+import { X, IndianRupee, Calendar, Tag as TagIcon, CreditCard, AlignLeft, Plus, Hash, AlertCircle } from 'lucide-react';
 import { useExpense } from '../../context/ExpenseContext';
 import type { Transaction, TransactionType } from '../../types';
 
@@ -27,10 +27,12 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [customCategoryName, setCustomCategoryName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
   useEffect(() => {
+    setFormError(null);
     if (initialData) {
       setType(initialData.type);
       setTitle(initialData.title);
@@ -44,7 +46,7 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
       setType('expense');
       setTitle('');
       setAmount('');
-      const defaultCat = categories.find((c) => c.type === 'expense')?.name || '';
+      const defaultCat = categories.find((c) => c.type === 'expense')?.name || (filteredCategories[0]?.name || '');
       setCategory(defaultCat);
       setTags([]);
       setDate(new Date().toISOString().split('T')[0]);
@@ -62,6 +64,8 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
     const available = categories.filter((c) => c.type === newType);
     if (available.length > 0) {
       setCategory(available[0].name);
+    } else {
+      setCategory('');
     }
   };
 
@@ -108,8 +112,40 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    // 1. Auto-resolve Category if custom category input is active or category is empty
+    let finalCategory = category;
+    if (isAddingCategory && customCategoryName.trim()) {
+      try {
+        const created = await addCategory(customCategoryName.trim(), type);
+        finalCategory = created.name;
+        setCategory(created.name);
+        setIsAddingCategory(false);
+      } catch (err) {
+        console.error('Failed creating custom category on submit:', err);
+        finalCategory = customCategoryName.trim();
+      }
+    }
+
+    if (!finalCategory && filteredCategories.length > 0) {
+      finalCategory = filteredCategories[0].name;
+    }
+
+    // 2. Validate Inputs with visual feedback
     const numAmount = parseFloat(amount);
-    if (!title.trim() || isNaN(numAmount) || numAmount <= 0 || !category) return;
+    if (!title.trim()) {
+      setFormError('Please enter a title or description.');
+      return;
+    }
+    if (isNaN(numAmount) || numAmount <= 0) {
+      setFormError('Please enter a valid amount greater than ₹0.');
+      return;
+    }
+    if (!finalCategory) {
+      setFormError('Please select or enter a category.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -118,7 +154,7 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
           title: title.trim(),
           amount: numAmount,
           type,
-          category,
+          category: finalCategory,
           tags,
           date,
           notes: notes.trim() || undefined,
@@ -129,7 +165,7 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
           title: title.trim(),
           amount: numAmount,
           type,
-          category,
+          category: finalCategory,
           tags,
           date,
           notes: notes.trim() || undefined,
@@ -137,8 +173,9 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
         });
       }
       onClose();
-    } catch (err) {
-      console.error('Failed saving transaction', err);
+    } catch (err: any) {
+      console.error('Failed saving transaction:', err);
+      setFormError(err?.message || 'Failed to save transaction. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -167,6 +204,14 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
           
+          {/* Validation Error Alert */}
+          {formError && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{formError}</span>
+            </div>
+          )}
+
           {/* Income vs Expense Toggle */}
           <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-950 border border-slate-800">
             <button
@@ -458,7 +503,7 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
             <button
               type="submit"
               disabled={submitting}
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-slate-950 transition-colors shadow-lg shadow-emerald-500/20"
+              className="px-5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-slate-950 transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
             >
               {submitting ? 'Saving...' : initialData ? 'Save Changes' : 'Add Entry'}
             </button>
