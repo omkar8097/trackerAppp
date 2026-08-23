@@ -284,6 +284,12 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
       isCustom: true,
     };
 
+    // Optimistically add to state immediately
+    setCustomCategories((prev) => {
+      if (prev.some((c) => c.name.toLowerCase() === cleanName.toLowerCase())) return prev;
+      return [...prev, newCat];
+    });
+
     if (currentUser && !isDemoMode && firebaseDb) {
       const docRef = await addDoc(collection(firebaseDb, 'categories'), {
         userId: currentUser.uid,
