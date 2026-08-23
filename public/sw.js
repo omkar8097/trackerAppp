@@ -1,24 +1,23 @@
-const CACHE_NAME = 'expenseflow-v1';
-const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg',
-  '/pwa-192x192.svg',
-  '/pwa-512x512.svg'
-];
+const CACHE_NAME = 'expenseflow-v2';
 
-// Install Event - Pre-cache core shell
+// Install Event - Pre-cache core shell using relative paths
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching app shell assets');
-      return cache.addAll(PRECACHE_ASSETS);
+      console.log('[SW] Pre-caching relative app shell assets');
+      return cache.addAll([
+        './',
+        './index.html',
+        './manifest.json',
+        './favicon.svg',
+        './pwa-192x192.svg',
+        './pwa-512x512.svg'
+      ]);
     }).then(() => self.skipWaiting())
   );
 });
 
-// Activate Event - Clean up stale caches
+// Activate Event - Clean up stale v1 caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,18 +33,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Stale-while-revalidate for static assets, network-first for navigation/API
+// Fetch Event - Dynamic relative caching
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests (e.g. POST, PUT, DELETE for Firestore)
+  // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Ignore browser-extension schemes or external dev tools
+  // Ignore non-http schemes
   if (!url.protocol.startsWith('http')) return;
 
-  // Navigation requests (HTML pages): Network first, fallback to cached index.html
+  // Navigation requests: Network first, fallback to relative cached index.html
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -57,13 +56,13 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          return caches.match('/index.html') || caches.match(request);
+          return caches.match('./index.html') || caches.match(request);
         })
     );
     return;
   }
 
-  // Static assets (JS, CSS, SVGs, Fonts): Stale-while-revalidate strategy
+  // Static assets: Stale-while-revalidate strategy
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       const fetchPromise = fetch(request)
@@ -75,7 +74,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // If network fetch fails, swallow error for static revalidation
+          // Swallow network error for cached assets
         });
 
       return cachedResponse || fetchPromise;
