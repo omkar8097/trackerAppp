@@ -224,16 +224,28 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const cleanTags = (t.tags || []).map((tag) => tag.trim().toLowerCase()).filter(Boolean);
 
     if (currentUser && !isDemoMode && firebaseDb) {
-      await addDoc(collection(firebaseDb, 'transactions'), {
-        ...t,
+      const docData: Record<string, any> = {
+        title: t.title,
+        amount: t.amount,
+        type: t.type,
+        category: t.category,
         tags: cleanTags,
+        date: t.date,
+        paymentMethod: t.paymentMethod || 'card',
         userId: currentUser.uid,
         createdAt,
-      });
+      };
+
+      if (t.notes && t.notes.trim()) {
+        docData.notes = t.notes.trim();
+      }
+
+      await addDoc(collection(firebaseDb, 'transactions'), docData);
     } else {
       const newTx: Transaction = {
         ...t,
         tags: cleanTags,
+        notes: t.notes && t.notes.trim() ? t.notes.trim() : undefined,
         id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
         createdAt,
       };
@@ -242,10 +254,24 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateTransaction = async (id: string, t: Partial<Transaction>) => {
-    const updateData = { ...t };
+    const updateData: Record<string, any> = { ...t };
     if (t.tags) {
       updateData.tags = t.tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
     }
+    if (t.notes !== undefined) {
+      if (t.notes.trim()) {
+        updateData.notes = t.notes.trim();
+      } else {
+        delete updateData.notes;
+      }
+    }
+
+    // Clean up any remaining undefined values
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
 
     if (currentUser && !isDemoMode && firebaseDb) {
       const docRef = doc(firebaseDb, 'transactions', id);

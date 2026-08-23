@@ -157,7 +157,7 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
           category: finalCategory,
           tags,
           date,
-          notes: notes.trim() || undefined,
+          notes: notes.trim() || '',
           paymentMethod,
         });
       } else {
@@ -168,7 +168,7 @@ export const TransactionFormModal: React.FC<Props> = ({ isOpen, onClose, initial
           category: finalCategory,
           tags,
           date,
-          notes: notes.trim() || undefined,
+          notes: notes.trim() || '',
           paymentMethod,
         });
       }
