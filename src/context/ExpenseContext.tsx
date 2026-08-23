@@ -236,11 +236,16 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         createdAt,
       };
 
-      if (t.notes && t.notes.trim()) {
+      if (t.notes && typeof t.notes === 'string' && t.notes.trim()) {
         docData.notes = t.notes.trim();
       }
 
-      await addDoc(collection(firebaseDb, 'transactions'), docData);
+      // Ensure zero undefined properties are sent to Cloud Firestore
+      const sanitizedDocData = Object.fromEntries(
+        Object.entries(docData).filter(([_, v]) => v !== undefined)
+      );
+
+      await addDoc(collection(firebaseDb, 'transactions'), sanitizedDocData);
     } else {
       const newTx: Transaction = {
         ...t,
